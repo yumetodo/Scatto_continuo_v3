@@ -105,10 +105,8 @@ void print_help() {
 		<< "  the following file formats are supported:" << endl
 		<< "   *.jpg, *.png, *.pbm, *.pgm, *.ppm" << endl
 		<< "  BTIMAP(*.bmp) is not supported because of disk access speed." << endl
-		<< "  The output file name is one that was replaced the '$(n)' in the string you set" << endl
-		<< "  to the string for the name collision avoidance." << endl
-		<< "  When '$ (n)' is not exist in the string," << endl
-		<< "  it will be inserted at the end of the file name" << endl
+		<< "  To avoid file collisions, $(n) will be replaced."
+		<< "  If $(n) does not exist, it will be inserted at the end of the filename."
 		<< "  ex.)" << endl
 		<< "   - C:\\path\\to\\source\\code\\cropped.jpg" << endl
 		<< "     --> C:\\path\\to\\source\\code\\cropped1_01.jpg" << endl
@@ -116,11 +114,11 @@ void print_help() {
 		<< "   - caputure.jpg --> capture1_01.jpg" << endl
 		<< endl
 		<< "--thresholding      : threshold image" << endl
-		<< "--to_gray_scale     : connvert to gray scaled image"
+		<< "--to_gray_scale     : convert to gray scaled image"
 		<< "--disable-algorithm-otu [thresh : double] : disable otu's algorithm and set threshold value(1.0 - 254.0)" << endl
 		<< endl
 		<< "--pxm-binary        : change pxm(ppm, pgm, pbm) save mode to binary mode(P1-P3)" << endl
-		<< "--png-compression [quality : int] : set PNG complession level(0 - 9 default:3)" << endl
+		<< "--png-compression [quality : int] : set PNG compression level(0 - 9 default:3)" << endl
 		<< "--jpeg-quality    [level : int]   : set JPG quality(0 - 100 default:95)" << endl;
 }
 
