@@ -25,5 +25,5 @@ public:
 	explicit successful_termination(const char* what_arg);
 };
 std::string determine_filename(const uintmax_t roop_turn, const PROCESS_CONF& conf);
-PROCESS_CONF commandline_analyzer(int argc, char* argv[]);
+PROCESS_CONF commandline_analyzer(int argc, char* argv[]) noexcept(false);
 void print_help();

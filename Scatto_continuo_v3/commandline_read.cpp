@@ -12,14 +12,8 @@
 #include <type_traits>
 #include <stdexcept>
 #include <exception>
-#ifdef max
-#undef max
-#endif
-#ifdef min
-#undef min
-#endif
 
-static std::string create_string_to_avoid_conflict(const uintmax_t roop_turn, const size_t num_to_avoid_conflict) {
+static inline std::string create_string_to_avoid_conflict(const uintmax_t roop_turn, const size_t num_to_avoid_conflict) {
 	std::stringstream ss;
 	ss << roop_turn << "_" << std::setw(2) << std::setfill('0') << num_to_avoid_conflict;
 	return ss.str();
@@ -62,7 +56,7 @@ namespace strtonum {
 	}
 }
 
-static auto split_name(std::string&& name) {
+static inline auto split_name(std::string&& name) {
 	std::pair<std::string, std::string> re;
 	const char* rep_str = "$(n)";
 	const auto split_i = name.find(rep_str);
@@ -78,6 +72,23 @@ static auto split_name(std::string&& name) {
 	return re;
 }
 
+static inline filename_c process_purse_o_option(const std::string& path) {
+	using std::move;
+	const auto p_last = path.find_last_of("\\");
+	if (0 == p_last
+		|| std::string::npos == p_last
+		|| !win32api_wrap::path_exist(path.substr(0, p_last))
+		) {
+		const auto n_f_i = path.find_last_of('\\');
+		auto n = split_name(path.substr(n_f_i, path.find_last_of('.') - n_f_i + 1));
+		return  filename_c(move(n.first), move(n.second), path.substr(path.find_last_of(".") + 1));
+	}
+	else {
+		auto n = split_name(path.substr(p_last + 1, path.find_last_of('.') - p_last));
+		return filename_c(path.substr(0, p_last) + "\\", move(n.first), move(n.second), path.substr(path.find_last_of(".") + 1));
+	}
+}
+
 void print_help() {
 	using std::endl;
 	std::cout
@@ -85,6 +96,8 @@ void print_help() {
 		<< "<options>" << endl
 		<< "-h, --help          : print help and exit" << endl
 		<< "-v, --version       : print version" << endl
+		<< "--opencv-info       : print cv::getBuildInformation()" << endl
+		<< endl
 		<< "-n   [num :uint64]  : set how many times you want to capture" << endl
 		<< "-fps [num : double] : set fps(0.0 - 60.0)." << endl
 		<< "-o   [file : string]: name or place the output into [file]" << endl
@@ -97,8 +110,8 @@ void print_help() {
 		<< "  When '$ (n)' is not exist in the string," << endl
 		<< "  it will be inserted at the end of the file name" << endl
 		<< "  ex.)" << endl
-		<< "   - C:\path\to\source\code\cropped.jpg" << endl
-		<< "     --> C:\path\to\source\code\cropped1_01.jpg" << endl
+		<< "   - C:\\path\\to\\source\\code\\cropped.jpg" << endl
+		<< "     --> C:\\path\\to\\source\\code\\cropped1_01.jpg" << endl
 		<< "   - capture$(n)_mine.png --> capture1_01_mine.png" << endl
 		<< "   - caputure.jpg --> capture1_01.jpg" << endl
 		<< endl
@@ -111,7 +124,7 @@ void print_help() {
 		<< "--jpeg-quality    [level : int]   : set JPG quality(0 - 100 default:95)" << endl;
 }
 
-PROCESS_CONF commandline_analyzer(int argc, char* argv[]) {
+PROCESS_CONF commandline_analyzer(int argc, char* argv[]) noexcept(false) {
 	using namespace strtonum;
 	PROCESS_CONF re = {};
 	re.threshold = 0.0;
@@ -120,7 +133,7 @@ PROCESS_CONF commandline_analyzer(int argc, char* argv[]) {
 	re.fps = 4.5;
 
 	std::unordered_map<std::string, std::function<void(const char *)>> cases = {
-		{ "-n", [&re](const char* arg){
+		{ "-n", [&re](const char* arg) noexcept {
 			try {
 				re.frame_num = purseUint<uintmax_t>(arg);
 			}
@@ -128,7 +141,7 @@ PROCESS_CONF commandline_analyzer(int argc, char* argv[]) {
 				re.frame_num = 1;
 			}
 		}},
-		{ "-fps", [&re](const char* arg) {
+		{ "-fps", [&re](const char* arg) noexcept {
 			try {
 				re.fps = purseDouble(arg, 60.0, 0.0);
 			}
@@ -137,22 +150,8 @@ PROCESS_CONF commandline_analyzer(int argc, char* argv[]) {
 			}
 		}},
 		{ "-o",	[&re](const char* arg) {
-			using std::move;
 			try {
-				auto path = std::string(arg);
-				const auto p_last = path.find_last_of("\\");
-				if (0 == p_last
-					|| std::string::npos == p_last
-					|| !win32api_wrap::path_exist(path.substr(0, p_last))
-				) {
-					const auto n_f_i = path.find_last_of('\\');
-					auto n = split_name(path.substr(n_f_i, path.find_last_of('.') - n_f_i + 1));
-					re.o_file = filename_c(move(n.first), move(n.second), path.substr(path.find_last_of(".") + 1));
-				}
-				else {
-					auto n = split_name(path.substr(p_last + 1, path.find_last_of('.') - p_last));
-					re.o_file = filename_c(path.substr(0, p_last) + "\\", move(n.first), move(n.second), path.substr(path.find_last_of(".") + 1));
-				}
+				re.o_file = process_purse_o_option(arg);
 				switch (re.o_file.get_pic_type()){
 				case picture_type::pbm:
 					re.process_mode = colormode_edit::thresholding;
@@ -168,7 +167,7 @@ PROCESS_CONF commandline_analyzer(int argc, char* argv[]) {
 				re.o_file = filename_c();
 			}
 		}},
-		{ "--png-compression", [&re](const char* arg) {
+		{ "--png-compression", [&re](const char* arg) noexcept {
 			try {
 				auto tmp = std::vector<int>(2);
 				tmp[0] = cv::IMWRITE_PNG_COMPRESSION;
@@ -178,7 +177,7 @@ PROCESS_CONF commandline_analyzer(int argc, char* argv[]) {
 			catch (const std::exception&) {
 			}
 		}},
-		{ "--jpeg-quality", [&re](const char* arg) {
+		{ "--jpeg-quality", [&re](const char* arg) noexcept {
 			try {
 				auto tmp = std::vector<int>(2);
 				tmp[0] = cv::IMWRITE_JPEG_QUALITY;
@@ -188,7 +187,7 @@ PROCESS_CONF commandline_analyzer(int argc, char* argv[]) {
 			catch (const std::exception&) {
 			}
 		}},
-		{ "--disable-algorithm-otu", [&re](const char* arg) {
+		{ "--disable-algorithm-otu", [&re](const char* arg) noexcept {
 			try {
 				re.threshold = purseDouble(arg, 254.0, 1.0);
 			}
@@ -205,29 +204,30 @@ PROCESS_CONF commandline_analyzer(int argc, char* argv[]) {
 			if (colormode_edit::none != re.process_mode) re.process_mode = colormode_edit::gray_scaled;
 		}},
 		{ "--pxm-binary", [&re]() {
-			auto tmp = std::vector<int>(2);
-			tmp[0] = cv::IMWRITE_PXM_BINARY;
-			tmp[1] = 0;//binary mode(P1-P3)
-			re.param = std::move(tmp);
+			re.param = std::vector<int>{cv::IMWRITE_PXM_BINARY, 0 };//binary mode(P1-P3)
 		}}
 	};
 
 	std::unordered_map<std::string, std::function<void(void)>> case_exist = {
-		{ "-v",	[]() {
+		{ "-v",	[]() noexcept(false) {
 			print_version();
 			throw successful_termination("option -v");
 		}},
-		{ "--version", []() {
+		{ "--version", []() noexcept(false) {
 			print_version();
 			throw successful_termination("option --version");
 		}},
-		{ "-h",	[]() {
+		{ "-h",	[]() noexcept(false) {
 			print_help();
 			throw successful_termination("option -h");
 		}},
-		{ "--help",	[]() {
+		{ "--help",	[]() noexcept(false) {
 			print_help();
 			throw successful_termination("option --help");
+		}},
+		{ "--opencv-info", []() noexcept(false) {
+			std::cout << cv::getBuildInformation() << std::endl;
+			throw successful_termination("option --opencv-info");
 		}}
 	};
 
@@ -241,7 +241,7 @@ PROCESS_CONF commandline_analyzer(int argc, char* argv[]) {
 		else if (case_exist.count(argv[i])) case_exist[argv[i]]();//throw successful_termination
 		else {
 			print_help();
-			throw successful_termination("unknown option");
+			throw std::runtime_error("unknown option");
 		}
 	}
 	return re;
