@@ -167,10 +167,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="commandline_read.cpp" />
+    <ClCompile Include="fileinfo.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="print_version.cpp" />
+    <ClCompile Include="win32api_wrap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="commandline_read.h" />
+    <ClInclude Include="fileinfo.h" />
+    <ClInclude Include="print_version.h" />
+    <ClInclude Include="win32api_wrap.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

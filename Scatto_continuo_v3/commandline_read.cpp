@@ -1,85 +1,44 @@
 ﻿#include <opencv2/highgui/highgui.hpp>
 #include "commandline_read.h"
-#include <Windows.h>
-#include <iomanip>
+#include "print_version.h"
+#include "win32api_wrap.h"
+#include <unordered_map>
 #include <functional>
-#include <type_traits>
-#include <errno.h>
+#include <iostream>
+#include <iomanip>
+#include <cerrno>
 #include <cstring>
 #include <limits>
+#include <type_traits>
 #include <stdexcept>
 #include <exception>
-#include <Shlwapi.h>//need -lShlwapi
 #ifdef max
 #undef max
 #endif
 #ifdef min
 #undef min
 #endif
-filename_c::filename_c() : filename_c(std::string("png")) {
-	this->constracted_ = false;
-}
 
-filename_c::filename_c(std::string && ext) : l_("caputure"), r_without_ext_(""), ext_(std::move(ext)), has_fullpath_(false){
-	this->r_ = this->r_without_ext_ + "." + this->ext_;
-	this->constracted_ = true;
-}
-
-filename_c::filename_c(std::string && l, std::string && r, std::string && ext)
-: l_(std::move(l)), r_without_ext_(std::move(r)), ext_(std::move(ext)), constracted_(true), has_fullpath_(false)
-{
-	this->r_ = this->r_without_ext_ + "." + this->ext_;
-}
-
-std::string filename_c::create(const std::string& num_str) const {
-	return this->l_ + num_str + this->r_;
-}
-
-const std::string & filename_c::get_extension() const noexcept{
-	return this->ext_;
-}
-
-picture_type filename_c::get_pic_type() const{
-	return this->conv_(this->ext_);
-}
-to_picture_type::to_picture_type(){
-	std::unordered_map<std::string, picture_type> re;
-	re.insert(std::make_pair(std::string("png"), picture_type::png));
-	re.insert(std::make_pair(std::string("jpg"), picture_type::jpg));
-	re.insert(std::make_pair(std::string("pbm"), picture_type::pbm));
-	re.insert(std::make_pair(std::string("pgm"), picture_type::pgm));
-	re.insert(std::make_pair(std::string("ppm"), picture_type::ppm));
-	this->convert_table_ = std::move(re);
-}
-
-picture_type to_picture_type::operator()(const std::string & ext) const{
-	return this->convert_table_.at(ext);
-}
-
-namespace win32api_wrap {
-	static std::string get_current_directory() {
-		std::string re(MAX_PATH + 10, '\0');
-		const auto len = GetCurrentDirectoryA(re.size() - 1, &re.front());
-		re.resize(len);
-		return re;
-	}
+static std::string create_string_to_avoid_conflict(const uintmax_t roop_turn, const size_t num_to_avoid_conflict) {
+	std::stringstream ss;
+	ss << roop_turn << "_" << std::setw(2) << std::setfill('0') << num_to_avoid_conflict;
+	return ss.str();
 }
 
 std::string determine_filename(const uintmax_t roop_turn, const PROCESS_CONF& conf) {
 	size_t num_to_avoid_conflict = 0;
-	std::string path;
+	std::string string_to_avoid_conflict;
 	do {
-		std::stringstream ss;
-		ss << roop_turn << "_" << std::setw(2) << std::setfill('0') << num_to_avoid_conflict;
-		path = win32api_wrap::get_current_directory() + "\\" + conf.o_file.create(ss.str());
-	} while (PathFileExistsA(path.c_str()));
-	return path;
+		++num_to_avoid_conflict;
+		string_to_avoid_conflict = create_string_to_avoid_conflict(roop_turn, num_to_avoid_conflict);
+	} while (!win32api_wrap::file_exist(conf.o_file.create_fullpath(string_to_avoid_conflict)));
+	return conf.o_file.create(string_to_avoid_conflict);
 }
 namespace strtonum {
 	template<typename T_> using limit = std::numeric_limits<T_>;
 	template<bool condition, typename T = void>
 	using enable_if_type = typename std::enable_if<condition, T>::type;
-	template<typename T_, enable_if_type<std::is_signed<T_>{}, std::nullptr_t> = nullptr> 
+	template<typename T_, enable_if_type<std::is_signed<T_>::value, std::nullptr_t> = nullptr> 
 	T_ purseInt(const char* str, const T_ max = limit<T_>::max(), const T_ min = limit<T_>::lowest()) {
 		errno = 0;
 		const auto re = std::strtoll(str, nullptr, 10);
@@ -94,7 +53,7 @@ namespace strtonum {
 		return static_cast<T_>(re);
 	}
 
-	template<typename T_, enable_if_type<std::is_floating_point<T_>{}, std::nullptr_t> = nullptr> 
+	template<typename T_, enable_if_type<std::is_floating_point<T_>::value, std::nullptr_t> = nullptr> 
 	T_ purseDouble(const char* str, const T_ max = limit<T_>::max(), const T_ min = limit<T_>::lowest()) {
 		errno = 0;
 		const auto re = std::strtod(str, nullptr);
@@ -102,6 +61,56 @@ namespace strtonum {
 		return static_cast<T_>(re);
 	}
 }
+
+static auto split_name(std::string&& name) {
+	std::pair<std::string, std::string> re;
+	const char* rep_str = "$(n)";
+	const auto split_i = name.find(rep_str);
+	if (std::string::npos == split_i) {
+		re.first = std::move(name);
+		re.second = "";
+	}
+	else {
+		re.second = name.substr(split_i + std::strlen(rep_str) + 1);
+		name.erase(0, split_i);
+		re.first = std::move(name);
+	}
+	return re;
+}
+
+void print_help() {
+	using std::endl;
+	std::cout
+		<< "Scatto_continuo.exe [options...]" << endl
+		<< "<options>" << endl
+		<< "-h, --help          : print help and exit" << endl
+		<< "-v, --version       : print version" << endl
+		<< "-n   [num :uint64]  : set how many times you want to capture" << endl
+		<< "-fps [num : double] : set fps(0.0 - 60.0)." << endl
+		<< "-o   [file : string]: name or place the output into [file]" << endl
+		<< "  The output image format is chosen based on the filename extension." << endl
+		<< "  the following file formats are supported:" << endl
+		<< "   *.jpg, *.png, *.pbm, *.pgm, *.ppm" << endl
+		<< "  BTIMAP(*.bmp) is not supported because of disk access speed." << endl
+		<< "  The output file name is one that was replaced the '$(n)' in the string you set" << endl
+		<< "  to the string for the name collision avoidance." << endl
+		<< "  When '$ (n)' is not exist in the string," << endl
+		<< "  it will be inserted at the end of the file name" << endl
+		<< "  ex.)" << endl
+		<< "   - C:\path\to\source\code\cropped.jpg" << endl
+		<< "     --> C:\path\to\source\code\cropped1_01.jpg" << endl
+		<< "   - capture$(n)_mine.png --> capture1_01_mine.png" << endl
+		<< "   - caputure.jpg --> capture1_01.jpg" << endl
+		<< endl
+		<< "--thresholding      : threshold image" << endl
+		<< "--to_gray_scale     : connvert to gray scaled image"
+		<< "--disable-algorithm-otu [thresh : double] : disable otu's algorithm and set threshold value(1.0 - 254.0)" << endl
+		<< endl
+		<< "--pxm-binary        : change pxm(ppm, pgm, pbm) save mode to binary mode(P1-P3)" << endl
+		<< "--png-compression [quality : int] : set PNG complession level(0 - 9 default:3)" << endl
+		<< "--jpeg-quality    [level : int]   : set JPG quality(0 - 100 default:95)" << endl;
+}
+
 PROCESS_CONF commandline_analyzer(int argc, char* argv[]) {
 	using namespace strtonum;
 	PROCESS_CONF re = {};
@@ -111,51 +120,133 @@ PROCESS_CONF commandline_analyzer(int argc, char* argv[]) {
 	re.fps = 4.5;
 
 	std::unordered_map<std::string, std::function<void(const char *)>> cases = {
-		{
-			"-f",
-			[&re](const char* arg){
-				try {
-					re.frame_num = purseUint<uintmax_t>(arg);
+		{ "-n", [&re](const char* arg){
+			try {
+				re.frame_num = purseUint<uintmax_t>(arg);
+			}
+			catch (const std::exception&) {
+				re.frame_num = 1;
+			}
+		}},
+		{ "-fps", [&re](const char* arg) {
+			try {
+				re.fps = purseDouble(arg, 60.0, 0.0);
+			}
+			catch (const std::exception&) {
+				re.fps = 4.5;
+			}
+		}},
+		{ "-o",	[&re](const char* arg) {
+			using std::move;
+			try {
+				auto path = std::string(arg);
+				const auto p_last = path.find_last_of("\\");
+				if (0 == p_last
+					|| std::string::npos == p_last
+					|| !win32api_wrap::path_exist(path.substr(0, p_last))
+				) {
+					const auto n_f_i = path.find_last_of('\\');
+					auto n = split_name(path.substr(n_f_i, path.find_last_of('.') - n_f_i + 1));
+					re.o_file = filename_c(move(n.first), move(n.second), path.substr(path.find_last_of(".") + 1));
 				}
-				catch (const std::exception& er) {
-					re.frame_num = 1;
+				else {
+					auto n = split_name(path.substr(p_last + 1, path.find_last_of('.') - p_last));
+					re.o_file = filename_c(path.substr(0, p_last) + "\\", move(n.first), move(n.second), path.substr(path.find_last_of(".") + 1));
+				}
+				switch (re.o_file.get_pic_type()){
+				case picture_type::pbm:
+					re.process_mode = colormode_edit::thresholding;
+					break;
+				case picture_type::pgm:
+					re.process_mode = colormode_edit::gray_scaled;
+					break;
+				default:
+					break;
 				}
 			}
-		},
-		{
-			"-fps",
-			[&re](const char* arg) {
-				try {
-					re.fps = purseDouble<double>(arg);
-				}
-				catch (const std::exception& er) {
-					re.fps = 4.5;
-				}
+			catch (const std::exception&) {
+				re.o_file = filename_c();
 			}
-		},
-		{
-			"-n",
-			[&re](const char* arg) {
-
+		}},
+		{ "--png-compression", [&re](const char* arg) {
+			try {
+				auto tmp = std::vector<int>(2);
+				tmp[0] = cv::IMWRITE_PNG_COMPRESSION;
+				tmp[1] = purseInt(arg, 9, 0);//default:3
+				re.param = std::move(tmp);
 			}
-		}
+			catch (const std::exception&) {
+			}
+		}},
+		{ "--jpeg-quality", [&re](const char* arg) {
+			try {
+				auto tmp = std::vector<int>(2);
+				tmp[0] = cv::IMWRITE_JPEG_QUALITY;
+				tmp[1] = purseInt(arg, 100, 0);//default:95
+				re.param = std::move(tmp);
+			}
+			catch (const std::exception&) {
+			}
+		}},
+		{ "--disable-algorithm-otu", [&re](const char* arg) {
+			try {
+				re.threshold = purseDouble(arg, 254.0, 1.0);
+			}
+			catch (const std::exception&) {
+				re.threshold = 0.0;
+			}
+		}}
 	};
+	std::unordered_map<std::string, std::function<void(void)>> cases_no_arg = {
+		{ "--thresholding",	[&re]() noexcept {
+			if (colormode_edit::none != re.process_mode) re.process_mode = colormode_edit::thresholding;
+		}},
+		{ "--to_gray_scale", [&re]() noexcept {
+			if (colormode_edit::none != re.process_mode) re.process_mode = colormode_edit::gray_scaled;
+		}},
+		{ "--pxm-binary", [&re]() {
+			auto tmp = std::vector<int>(2);
+			tmp[0] = cv::IMWRITE_PXM_BINARY;
+			tmp[1] = 0;//binary mode(P1-P3)
+			re.param = std::move(tmp);
+		}}
+	};
+
+	std::unordered_map<std::string, std::function<void(void)>> case_exist = {
+		{ "-v",	[]() {
+			print_version();
+			throw successful_termination("option -v");
+		}},
+		{ "--version", []() {
+			print_version();
+			throw successful_termination("option --version");
+		}},
+		{ "-h",	[]() {
+			print_help();
+			throw successful_termination("option -h");
+		}},
+		{ "--help",	[]() {
+			print_help();
+			throw successful_termination("option --help");
+		}}
+	};
+
+	for (int i = 1; i < argc; ++i) {
+		if (cases.count(argv[i])) {
+			if (i + 1 >= argc) break;
+			cases[argv[i]](argv[i + 1]);
+			++i;
+		}
+		else if (cases_no_arg.count(argv[i])) cases_no_arg[argv[i]]();
+		else if (case_exist.count(argv[i])) case_exist[argv[i]]();//throw successful_termination
+		else {
+			print_help();
+			throw successful_termination("unknown option");
+		}
+	}
+	return re;
 }
 
-template<typename O, typename T> class unorderd_map_getOrDefault {
-public:
-	unorderd_map_getOrDefault(const O& key, const T& val) : key_(key), val_(val) {}
-private:
-	template<typename O, typename T> friend T getOrDefault(const std::unordered_map<O, T>& map, const unorderd_map_getOrDefault& arg);
-	O key_;
-	T val_;
-};
-template<typename O, typename T> unorderd_map_getOrDefault getOrDefault(const O& key, const T& val) {
-	return unorderd_map_getOrDefault(key, val);
-}
-template<typename O, typename T> T operator|(const std::unordered_map<O, T>& map, unorderd_map_getOrDefault&& arg) {
-	return (map.count(arg.key_)) ? map[key] : arg.val_;
-}
+successful_termination::successful_termination(const std::string & what_arg) : std::runtime_error("successful_termination : " + what_arg) {}
 
-
-
+successful_termination::successful_termination(const char * what_arg) : std::runtime_error(std::string("successful_termination : ") + what_arg) {}
