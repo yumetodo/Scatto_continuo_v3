@@ -1,19 +1,19 @@
-﻿#include <opencv2/highgui/highgui.hpp>
+﻿#include <iostream>
+#include <sstream>  
+#include <iomanip>
+#include <opencv2/highgui/highgui.hpp>
 #include "commandline_read.h"
 #include "print_version.h"
 #include "win32api_wrap.h"
 #include <unordered_map>
 #include <functional>
-#include <iostream>
-#include <iomanip>
 #include <cerrno>
 #include <cstring>
 #include <limits>
 #include <type_traits>
 #include <stdexcept>
 #include <exception>
-
-static inline std::string create_string_to_avoid_conflict(const uintmax_t roop_turn, const size_t num_to_avoid_conflict) {
+static std::string create_string_to_avoid_conflict(const uintmax_t roop_turn, const size_t num_to_avoid_conflict) {
 	std::stringstream ss;
 	ss << roop_turn << "_" << std::setw(2) << std::setfill('0') << num_to_avoid_conflict;
 	return ss.str();
@@ -25,7 +25,7 @@ std::string determine_filename(const uintmax_t roop_turn, const PROCESS_CONF& co
 	do {
 		++num_to_avoid_conflict;
 		string_to_avoid_conflict = create_string_to_avoid_conflict(roop_turn, num_to_avoid_conflict);
-	} while (!win32api_wrap::file_exist(conf.o_file.create_fullpath(string_to_avoid_conflict)));
+	} while (win32api_wrap::file_exist(conf.o_file.create_fullpath(string_to_avoid_conflict)));
 	return conf.o_file.create(string_to_avoid_conflict);
 }
 namespace strtonum {

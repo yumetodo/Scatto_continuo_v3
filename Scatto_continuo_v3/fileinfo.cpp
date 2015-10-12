@@ -33,7 +33,7 @@ std::string filename_c::create(const std::string& num_str) const {
 }
 
 std::string filename_c::create_fullpath(const std::string & num_str) const {
-	return this->n_l_ + num_str + this->r_;
+	return this->l_ + num_str + this->r_;
 }
 
 const std::string & filename_c::get_extension() const noexcept {

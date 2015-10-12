@@ -15,18 +15,41 @@ namespace win32api_wrap {
 	bool file_exist(const std::string& fullpath) {
 		return (!fullpath.empty()) && (0 != PathFileExistsA(fullpath.c_str()));
 	}
-	bool beep(uint32_t nBufferLength, uint32_t lpBuffer){
-		return 0 != Beep(nBufferLength, lpBuffer);
+	bool beep(uint32_t Hz, uint32_t mmtime){
+		return 0 != Beep(Hz, mmtime);
 	}
-	capture_c::capture_c(const BITMAPINFO & bmi) : bmi_(bmi) {
+	HWND get_desktop_window_handle() {
+		return GetDesktopWindow();
+	}
+	static BITMAPINFO make_BITMAPINFO(const RECT& rc) {
+		BITMAPINFO bmi = {};
+		bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+		bmi.bmiHeader.biWidth = rc.right;
+		bmi.bmiHeader.biHeight = rc.bottom;
+		bmi.bmiHeader.biPlanes = 1;
+		bmi.bmiHeader.biBitCount = 32;
+		bmi.bmiHeader.biCompression = BI_RGB;
+		bmi.bmiHeader.biSizeImage = rc.bottom * ((3 * rc.right + 3) / 4) * 4;
+		return bmi;
+	}
+
+	capture_c::capture_c(HWND hwnd) : hwnd_(hwnd) {
+		this->cap_handle_update(this->hwnd_);
 		this->hdc_ = ::CreateCompatibleDC(nullptr);
 		this->hbmp_ = CreateDIBSection(nullptr, &this->bmi_, DIB_RGB_COLORS, &this->lpPixel_, nullptr, 0);
 		SelectObject(this->hdc_, this->hbmp_);
 	}
 
-	capture_c::~capture_c() {
+	capture_c::~capture_c() noexcept {
 		DeleteObject(this->hbmp_);
 		DeleteDC(this->hdc_);
+	}
+
+	void capture_c::cap_handle_update(HWND hwnd){
+		RECT rc;
+		GetWindowRect(hwnd, &rc);
+		this->rc_ = rc;
+		this->bmi_ = make_BITMAPINFO(rc);
 	}
 
 	void capture_c::draw_cursor(){
@@ -43,8 +66,8 @@ namespace win32api_wrap {
 		DrawIcon(this->hdc_, x, y, cursorInfo.hCursor);
 	}
 
-	BITMAP capture_c::capture(HWND hwndDesk, const RECT& rc){
-		BitBlt(this->hdc_, 0, 0, rc.right, rc.bottom, GetWindowDC(hwndDesk), 0, 0, SRCCOPY);//これがキャプチャー部分
+	BITMAP capture_c::capture(){
+		BitBlt(this->hdc_, 0, 0, this->rc_.right, this->rc_.bottom, GetWindowDC(this->hwnd_), 0, 0, SRCCOPY);//これがキャプチャー部分
 		this->draw_cursor();
 		BITMAP  bm;
 		GetObject(this->hbmp_, sizeof(BITMAP), &bm);

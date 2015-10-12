@@ -98,7 +98,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\lib\opencv-3.0.0\build\install\$(PlatformTarget)\vc14\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_core300d.lib;opencv_highgui300d.lib;opencv_imgproc300d.lib;opencv_objdetect300d.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_core300d.lib;opencv_highgui300d.lib;opencv_imgproc300d.lib;opencv_objdetect300d.lib;opencv_imgcodecs300.lib;Shlwapi.lib;Gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -118,7 +118,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\lib\opencv-3.0.0\build\install\$(PlatformTarget)\vc14\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_core300d.lib;opencv_highgui300d.lib;opencv_imgproc300d.lib;opencv_objdetect300d.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_core300d.lib;opencv_highgui300d.lib;opencv_imgproc300d.lib;opencv_objdetect300d.lib;opencv_imgcodecs300.lib;Shlwapi.lib;Gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -142,7 +142,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>C:\lib\opencv-3.0.0\build\install\$(PlatformTarget)\vc14\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_core300.lib;opencv_highgui300.lib;opencv_imgproc300.lib;opencv_objdetect300.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_core300.lib;opencv_highgui300.lib;opencv_imgproc300.lib;opencv_objdetect300.lib;opencv_imgcodecs300.lib;Shlwapi.lib;Gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -166,11 +166,12 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>C:\lib\opencv-3.0.0\build\install\$(PlatformTarget)\vc14\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_core300.lib;opencv_highgui300.lib;opencv_imgproc300.lib;opencv_objdetect300.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_core300.lib;opencv_highgui300.lib;opencv_imgproc300.lib;opencv_objdetect300.lib;opencv_imgcodecs300.lib;Shlwapi.lib;Gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="commandline_read.cpp" />
+    <ClCompile Include="convert.cpp" />
     <ClCompile Include="fileinfo.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="print_version.cpp" />
@@ -178,6 +179,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="commandline_read.h" />
+    <ClInclude Include="convert.h" />
     <ClInclude Include="fileinfo.h" />
     <ClInclude Include="print_version.h" />
     <ClInclude Include="win32api_wrap.h" />
