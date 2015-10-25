@@ -2,7 +2,7 @@
 #include "win32api_wrap.h"
 #include <unordered_map>
 
-filename_c::filename_c() : filename_c("png") {}
+filename_c::filename_c() : filename_c("bmp") {}
 
 filename_c::filename_c(std::string && ext) : filename_c("caputure", std::move(ext)) {}
 
