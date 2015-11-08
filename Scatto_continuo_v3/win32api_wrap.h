@@ -1,5 +1,7 @@
 ﻿#pragma once
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <string>
 #include <cstdint>
 #include <wtypes.h>
@@ -13,7 +15,7 @@ namespace win32api_wrap {
 	class capture_c
 	{
 	public:
-		explicit capture_c::capture_c(HWND hwnd);
+		explicit capture_c(HWND hwnd);
 		~capture_c() noexcept;
 		BITMAP capture();
 		void cap_handle_update(HWND hwnd);

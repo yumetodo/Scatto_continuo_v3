@@ -2,21 +2,21 @@
 #include "win32api_wrap.h"
 #include <unordered_map>
 
-filename_c::filename_c() : filename_c("png") {}
-
-filename_c::filename_c(std::string && ext) : filename_c("caputure", std::move(ext)) {}
-
-filename_c::filename_c(std::string && name, std::string && ext) : filename_c(std::move(name), "", std::move(ext)) {}
-
 filename_c::filename_c(std::string && n_l, std::string && n_r, std::string && ext)
-	: dp_(""), n_l_(std::move(n_l)), n_r_(std::move(n_r)), ext_(std::move(ext)), has_fullpath_(false), conv_()
+	: n_l_(std::move(n_l)), n_r_(std::move(n_r)), dp_(""), ext_(std::move(ext)), has_fullpath_(false), conv_()
 {
 	this->l_ = win32api_wrap::get_current_directory() + "\\" + this->n_l_;
 	this->r_ = this->n_r_ + "." + this->ext_;
 }
 
+filename_c::filename_c(std::string && name, std::string && ext) : filename_c(std::move(name), "", std::move(ext)) {}
+
+filename_c::filename_c(std::string && ext) : filename_c("caputure", std::move(ext)) {}
+
+filename_c::filename_c() : filename_c("png") {}
+
 filename_c::filename_c(std::string && path, std::string && n_l, std::string && n_r, std::string && ext)
-	: dp_(std::move(path)), n_l_(std::move(n_l)), n_r_(std::move(n_r)), ext_(std::move(ext)), conv_()
+	: n_l_(std::move(n_l)), n_r_(std::move(n_r)), dp_(std::move(path)), ext_(std::move(ext)), conv_()
 {
 	this->has_fullpath_ = win32api_wrap::path_exist(this->dp_);
 	if (this->has_fullpath_) {

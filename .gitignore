@@ -191,5 +191,11 @@ ModelManifest.xml
 
 #other
 constant.html
+*.png
+*.jpg
+*.bmp
+*.ppm
+*.pgm
+*.pbm
 2015_C_Textbook.sublime-workspace
 
