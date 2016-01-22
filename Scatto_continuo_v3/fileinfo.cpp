@@ -9,6 +9,9 @@ filename_c::filename_c(std::string && n_l, std::string && n_r, std::string && ex
 	this->r_ = this->n_r_ + "." + this->ext_;
 }
 
+filename_c::filename_c(std::pair<std::string, std::string>&& name_lr, std::string && ext) 
+	: filename_c(std::move(name_lr.first), std::move(name_lr.second), std::move(ext)){}
+
 filename_c::filename_c(std::string && name, std::string && ext) : filename_c(std::move(name), "", std::move(ext)) {}
 
 filename_c::filename_c(std::string && ext) : filename_c("caputure", std::move(ext)) {}
@@ -28,6 +31,9 @@ filename_c::filename_c(std::string && path, std::string && n_l, std::string && n
 	this->r_ = this->n_r_ + "." + this->ext_;
 }
 
+filename_c::filename_c(std::string && path, std::pair<std::string, std::string>&& name_lr, std::string && ext)
+	: filename_c(std::move(path), std::move(name_lr.first), std::move(name_lr.second), std::move(ext)) {}
+
 std::string filename_c::create(const std::string& num_str) const {
 	return ((this->has_fullpath_) ? this->l_ : this->n_l_) + num_str + this->r_;
 }
@@ -45,9 +51,7 @@ picture_type filename_c::get_pic_type() const {
 }
 
 struct to_picture_type::Impl {
-	Impl(std::unordered_map<std::string, picture_type>&& table) {
-		this->convert_table_ = std::move(table);
-	}
+	Impl(std::unordered_map<std::string, picture_type>&& table) : convert_table_(std::move(table)) {}
 	std::unordered_map<std::string, picture_type> convert_table_;
 };
 
@@ -58,6 +62,7 @@ to_picture_type::to_picture_type() {
 	re.insert(std::make_pair(std::string("pbm"), picture_type::pbm));
 	re.insert(std::make_pair(std::string("pgm"), picture_type::pgm));
 	re.insert(std::make_pair(std::string("ppm"), picture_type::ppm));
+	re.insert(std::make_pair(std::string("bmp"), picture_type::bmp));
 	this->pimpl_ = std::make_shared<Impl>(std::move(re));
 }
 

@@ -1,12 +1,14 @@
 ﻿#pragma once
 #include <string>
 #include <memory>
+#include <utility>
 enum class picture_type {
 	png,
 	jpg,
 	pbm,
 	pgm,
-	ppm
+	ppm,
+	bmp
 };
 struct to_picture_type {
 public:
@@ -22,7 +24,9 @@ public:
 	filename_c(std::string&& ext);
 	filename_c(std::string&& name, std::string&& ext);
 	filename_c(std::string && n_l, std::string && n_r, std::string && ext);
+	filename_c(std::pair<std::string, std::string>&& name_lr, std::string&& ext);
 	filename_c(std::string && path, std::string && n_l, std::string && n_r, std::string && ext);
+	filename_c(std::string && path, std::pair<std::string, std::string>&& name_lr, std::string&& ext);
 	filename_c(const filename_c& o) = default;
 	filename_c(filename_c&& o) = default;
 	filename_c& operator=(const filename_c& o) = default;

@@ -56,20 +56,19 @@ namespace strtonum {
 	}
 }
 
-static inline auto split_name(std::string&& name) {
-	std::pair<std::string, std::string> re;
+static std::pair<std::string, std::string> split_name(std::string&& name) {
 	const char* rep_str = "$(n)";
 	const auto split_i = name.find(rep_str);
 	if (std::string::npos == split_i) {
-		re.first = std::move(name);
-		re.second = "";
+		return{ std::move(name) , "" };
 	}
 	else {
+		std::pair<std::string, std::string> re;
 		re.second = name.substr(split_i + std::strlen(rep_str) + 1);
 		name.erase(0, split_i);
 		re.first = std::move(name);
+		return re;
 	}
-	return re;
 }
 
 static inline filename_c process_purse_o_option(const std::string& path) {
@@ -79,13 +78,12 @@ static inline filename_c process_purse_o_option(const std::string& path) {
 		|| std::string::npos == p_last
 		|| !win32api_wrap::path_exist(path.substr(0, p_last))
 		) {
-		const auto n_f_i = path.find_last_of('\\');
-		auto n = split_name(path.substr(n_f_i, path.find_last_of('.') - n_f_i + 1));
-		return  filename_c(move(n.first), move(n.second), path.substr(path.find_last_of(".") + 1));
+		const auto n_f_i = (std::string::npos == p_last) ? 0 : p_last;
+		return filename_c(split_name(path.substr(n_f_i, path.find_last_of('.') - n_f_i)), path.substr(path.find_last_of(".") + 1));
 	}
 	else {
 		auto n = split_name(path.substr(p_last + 1, path.find_last_of('.') - p_last));
-		return filename_c(path.substr(0, p_last) + "\\", move(n.first), move(n.second), path.substr(path.find_last_of(".") + 1));
+		return filename_c(path.substr(0, p_last) + "\\", move(n), path.substr(path.find_last_of(".") + 1));
 	}
 }
 
