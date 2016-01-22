@@ -5,7 +5,7 @@
 namespace win32api_wrap {
 	std::string get_current_directory() {
 		std::string re(MAX_PATH + 10, '\0');
-		const auto len = GetCurrentDirectoryA(re.size() - 1, &re.front());
+		const auto len = GetCurrentDirectoryA(static_cast<DWORD>(re.size()) - 1, &re.front());
 		re.resize(len);
 		return re;
 	}
