@@ -101,8 +101,8 @@ void print_help() {
 		<< "-o   [file : string]: name or place the output into [file]" << endl
 		<< "  The output image format is chosen based on the filename extension." << endl
 		<< "  the following file formats are supported:" << endl
-		<< "   *.jpg, *.png, *.pbm, *.pgm, *.ppm" << endl
-		<< "  BTIMAP(*.bmp) is not supported because of disk access speed." << endl
+		<< "   *.jpg, *.png, *.pbm, *.pgm, *.ppm, *.bmp" << endl
+		<< "  BTIMAP(*.bmp) is deprecated because of disk access speed." << endl
 		<< "  To avoid file collisions, $(n) will be replaced."
 		<< "  If $(n) does not exist, it will be inserted at the end of the filename."
 		<< "  ex.)" << endl
@@ -117,7 +117,10 @@ void print_help() {
 		<< endl
 		<< "--pxm-binary        : change pxm(ppm, pgm, pbm) save mode to binary mode(P1-P3)" << endl
 		<< "--png-compression [quality : int] : set PNG compression level(0 - 9 default:3)" << endl
-		<< "--jpeg-quality    [level : int]   : set JPG quality(0 - 100 default:95)" << endl;
+		<< "--jpeg-quality    [level : int]   : set JPG quality(0 - 100 default:95)" << endl
+		<< endl
+		<< "--no-countdown-timer: disable 5 sec. count down timer before starting capture." << endl;
+
 }
 
 PROCESS_CONF commandline_analyzer(int argc, char* argv[]) noexcept(false) {
@@ -201,6 +204,9 @@ PROCESS_CONF commandline_analyzer(int argc, char* argv[]) noexcept(false) {
 		}},
 		{ "--pxm-binary", [&re]() {
 			re.param = std::vector<int>{cv::IMWRITE_PXM_BINARY, 0 };//binary mode(P1-P3)
+		}},
+		{ "--no-countdown-timer", [&re]() {
+			re.no_countdown_timer = true;
 		}}
 	};
 

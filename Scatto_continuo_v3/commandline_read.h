@@ -17,6 +17,7 @@ struct PROCESS_CONF {
 	colormode_edit process_mode;//-edit
 	uintmax_t frame_num;//-f
 	double fps;//-fps
+	bool no_countdown_timer;
 };
 
 class successful_termination : public std::runtime_error {

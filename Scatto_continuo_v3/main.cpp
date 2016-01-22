@@ -46,7 +46,7 @@ void save_image(cv::Mat& img, const PROCESS_CONF& conf, uintmax_t roop_turn) {
 int main(int argc, char* argv[]) {
 	try {
 		const auto conf = commandline_analyzer(argc, argv);
-		count_down(5);
+		if(!conf.no_countdown_timer) count_down(5);
 		auto cap = win32api_wrap::capture_c(win32api_wrap::get_desktop_window_handle());
 		for (size_t i = 0; i < conf.frame_num; ++i) {
 			auto bm = cap.capture();
