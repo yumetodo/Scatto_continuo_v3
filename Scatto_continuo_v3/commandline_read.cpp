@@ -30,16 +30,14 @@ std::string determine_filename(const uintmax_t roop_turn, const PROCESS_CONF& co
 }
 namespace strtonum {
 	template<typename T_> using limit = std::numeric_limits<T_>;
-	template<bool condition, typename T = void>
-	using enable_if_type = typename std::enable_if<condition, T>::type;
-	template<typename T_, enable_if_type<std::is_signed<T_>::value, std::nullptr_t> = nullptr> 
+	template<typename T_, std::enable_if_t<std::is_signed<T_>::value, std::nullptr_t> = nullptr> 
 	T_ purseInt(const char* str, const T_ max = limit<T_>::max(), const T_ min = limit<T_>::lowest()) {
 		errno = 0;
 		const auto re = std::strtoll(str, nullptr, 10);
 		if (!errno || re < min || max < re) throw std::runtime_error("変換に失敗しました");
 		return static_cast<T_>(re);
 	}
-	template<typename T_, enable_if_type<std::is_unsigned<T_>::value, std::nullptr_t> = nullptr> 
+	template<typename T_, std::enable_if_t<std::is_unsigned<T_>::value, std::nullptr_t> = nullptr>
 	T_ purseUint(const char* str, const T_ max = limit<T_>::max(), const T_ min = limit<T_>::lowest()) {
 		errno = 0;
 		const auto re = std::strtoull(str, nullptr, 10);
@@ -47,7 +45,7 @@ namespace strtonum {
 		return static_cast<T_>(re);
 	}
 
-	template<typename T_, enable_if_type<std::is_floating_point<T_>::value, std::nullptr_t> = nullptr> 
+	template<typename T_, std::enable_if_t<std::is_floating_point<T_>::value, std::nullptr_t> = nullptr>
 	T_ purseDouble(const char* str, const T_ max = limit<T_>::max(), const T_ min = limit<T_>::lowest()) {
 		errno = 0;
 		const auto re = std::strtod(str, nullptr);
